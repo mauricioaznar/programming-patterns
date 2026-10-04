@@ -11,22 +11,20 @@ set -u
 #
 # Try it with just a command name and no extra args, and with a command name
 # plus several extra args.
-cmd=${1:-"help"};
 
-if [[ "$cmd" == "help" ]]
+if [[ $# -eq 0 ]];
  then
     echo "shift example, please pass at least one arg";
     exit 0;
 fi
 
+cmd="$1"
+
 shift 1;
 
-args=""
-for word in "$@"; do
-    args="$args <$word>"
-done
+printf "%s " "$cmd"
 
-echo "$cmd$args"
+# print arguments
+if [[ $# -gt 0 ]]; then printf "<%s> " "$@"; fi
 
-cmd "$@"
-
+echo

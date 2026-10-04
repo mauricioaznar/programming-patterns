@@ -52,9 +52,9 @@ subfolder when another command needs its own primitives.
 - ✅ `03-conditionals.sh` — `if`/`[[ ]]` and exit codes
 - ✅ `03-1-predictions.sh` — predict-only: expansion pipeline vs quoting, `[ ]` (command) vs `[[ ]]` (grammar)
 - ✅ `04-case.sh` — `case` statement
-- ⬜ `05-shift.sh` — `shift`
-- ⬜ `06-functions.sh` — functions + heredoc
-- ⬜ `07-location.sh` — script self-location (`${BASH_SOURCE[0]}`)
+- ✅ `05-shift.sh` — `shift`
+- ✅ `06-functions.sh` — functions + heredoc
+- 🚧 `07-location.sh` — script self-location (`${BASH_SOURCE[0]}`)
 - ⬜ `08-exec.sh` — `exec` vs. a plain call
 
 ## Exercises
@@ -299,6 +299,40 @@ new-feature / new-fix, ⬜ worktree-init, ⬜ statusline.
   `echo "…" >&2; exit 1`.
 - **`04`: unknown commands exited 0 silently** → the "fallback" branch matched
   only the literal word `fallback` → `*)` matches anything.
+- **`05`: `cmd "$@"` on the last line** → missing `$`, so bash would look
+  up a program literally named `cmd`, not the saved command name → `"$cmd"`
+  (and the drill only asked to *print* the handoff, so the line was dropped).
+- **`05`: `printf "%s" "$@"` "printed nothing"** → it did print, but `%s`
+  has no separator and `printf` adds no newline, so `ab` ran straight into the
+  `echo` line (`abfoo <a> <b>`). zsh's trailing `%` is the same symptom: output
+  didn't end in `\n` → put the separator and `\n` in the format string.
+- **`05`: `printf "<%s> "` with no args printed `<>`** → `printf` runs its
+  format at least once, filling `%s` with an empty string, which looks like one
+  empty arg → guard with `[[ $# -gt 0 ]]`.
+- **`05`: guarded with `[[ -n $@ ]]`** → tests the *content* (args joined by
+  spaces), not the count; `3 ""` leaves one empty arg → joined `""` → false,
+  and the arg is skipped → test `$#`.
+- **`05`: `[[ $# > 0 ]]`** → `>` inside `[[ ]]` compares *strings*; worked by
+  luck because every count ≥1 sorts after `"0"` (`[[ 10 > 9 ]]` is false) →
+  `-gt`.
+- **`05`: `${1:-help}` reserved the word `help`** → passing `help` behaved
+  like passing nothing → check `$#` first, then `cmd=$1` (order matters under
+  `set -u`).
+- **`06`: syntax error, unexpected end of file** → closing `  EOF` was
+  indented; the delimiter must be the whole line, so the heredoc never closed
+  and swallowed the `}` → `EOF` at column 0 (or `<<-` with *tabs* only).
+- **`06`: heredoc with no command printed nothing** → `<<EOF` only feeds
+  stdin; with no command there's nobody to read it → `cat <<'EOF'`.
+- **`07`: `$(pwd $(cd $(dirname $BASH_SOURCE[0])))` printed the caller's
+  directory** → each `$(…)` is its own subshell: the `cd` ran in one and
+  died with it, `pwd` ran in another that never moved → `cd` and `pwd` in the
+  *same* `$(…)`, joined by `&&`.
+- **`07`: `$BASH_SOURCE[0]` without braces** → expands `$BASH_SOURCE` then
+  appends a literal (and globbable) `[0]`; hidden only because `dirname` drops
+  the last part → `"${BASH_SOURCE[0]}"`.
+- **`07`: thought the reference put `/..` after the filename** → misread the
+  nesting; `/..` is outside `$(dirname …)`, so it's `scripts/..` (dir), never
+  `file.sh/..` (`Not a directory`).
 
 ## Learnings
 
@@ -553,3 +587,26 @@ new-feature / new-fix, ⬜ worktree-init, ⬜ statusline.
   which parses the whole file first).
 - **Debugging:** `echo "[$x]"` (brackets show empty), `"${1-UNSET}"` (unset vs
   empty), `set -x` / `bash -x script` (prints each command after expansion).
+- **`printf` reuses its format for every argument, and runs it at least
+  once.** `printf '<%s> ' a b` → `<a> <b> `; with no args it still prints
+  `<> `. It never adds a newline you didn't write. In zsh, a trailing `%` after
+  output means the output didn't end in `\n`.
+- **Numbers vs strings in tests.** `-eq -ne -lt -le -gt -ge` compare numbers
+  and work in `[ ]` and `[[ ]]`; `<` `>` `==` inside `[[ ]]` compare strings
+  (inside `[ ]`, `>` is a redirect). `(( $# > 0 ))` is the arithmetic form.
+- **A heredoc is stdin, not output.** `cat <<'EOF'` prints because `cat` reads
+  it. The closing delimiter must be the entire line. Quoting the opener
+  (`<<'EOF'`) makes the body literal (`$HOME` stays `$HOME`); unquoted `<<EOF`
+  expands like double quotes. `<<-EOF` strips leading tabs only.
+- **The word after `case` isn't split or globbed**, so `case ${1:-} in` is safe
+  unquoted; `""|help|-h)` matches no-arg, `help`, and `-h` in one branch.
+- **Script self-location: `"$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`.**
+  `BASH_SOURCE[0]` is the path *as typed* (relative to the launch dir);
+  `dirname` drops the filename; `cd` inside `$(…)` lets the filesystem resolve
+  `.`/`..`/absolute without moving the script; `pwd` prints the absolute
+  result. `&&` is not a pipe — `pwd` reads nothing from `cd`, it just runs
+  where `cd` landed. Path resolution is per-component: every part but the last
+  must be a directory (`file.sh/..` fails), unlike Node's text-only
+  `path.resolve`. The reference appends `/..` after `dirname` to set `ROOT` to
+  the repo root, so every path reads `$ROOT/docs/…`, `$ROOT/scripts/…`.
+  `BASH_SOURCE` is bash-only: `source`-ing from zsh leaves it empty.
