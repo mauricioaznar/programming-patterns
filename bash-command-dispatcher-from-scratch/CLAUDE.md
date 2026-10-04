@@ -55,7 +55,7 @@ subfolder when another command needs its own primitives.
 - ✅ `05-shift.sh` — `shift`
 - ✅ `06-functions.sh` — functions + heredoc
 - ✅ `07-location.sh` — script self-location (`${BASH_SOURCE[0]}`)
-- ⬜ `08-exec.sh` — `exec` vs. a plain call
+- ✅ `08-exec.sh` — `exec` vs. a plain call
 
 ## Exercises
 
@@ -333,6 +333,19 @@ new-feature / new-fix, ⬜ worktree-init, ⬜ statusline.
 - **`07`: thought the reference put `/..` after the filename** → misread the
   nesting; `/..` is outside `$(dirname …)`, so it's `scripts/..` (dir), never
   `file.sh/..` (`Not a directory`).
+- **`08`: predicted `exec` gives the callee a different `$$`** → `exec`
+  doesn't fork; it replaces the program inside the *same* process, so the PID
+  is unchanged (all three `$$` lines matched) → only a plain `bash f.sh`
+  (fork) gets a new PID.
+- **`08`: predicted `$?` after a plain `bash callee.sh` would be 0** → `$?`
+  right after the call is the *callee's* exit code (7); the whole run's code
+  is whatever the caller does last (`exit 8`) — two different layers.
+- **`08`: "`exec` shows no exit status"** → the prompt just didn't display
+  it; `bash 08-exec.sh; echo $?` printed 7 because the callee *became* the
+  process. The caller's `exit 8` after `exec` was dead code.
+- **`08`: predicted master's last line prints after the sourced caller's
+  `exit 8`** → `exit` in a sourced file ends the *sourcing* shell, so master
+  stops there → use `return` in files meant to be sourced.
 
 ## Learnings
 
@@ -621,3 +634,12 @@ new-feature / new-fix, ⬜ worktree-init, ⬜ statusline.
   the file that defined the function — why `workspace.sh` (sourced by
   `drop.sh`, `new-branch.sh`) still finds its own folder. zsh is the reverse:
   its `$0` already names the sourced file by default.
+- **`exec cmd` replaces the shell; a plain call forks a child.** Plain
+  `bash f.sh`: new process, new PID; the caller waits, then continues with
+  `$?` = the child's exit code. `exec bash f.sh`: same PID, nothing after that
+  line runs, and the child's exit code *is* the script's exit code. That's why
+  a dispatcher ends with `exec "$script" "$@"` — no extra shell left waiting,
+  and the subcommand's status reaches the user unchanged. An `exec` inside a
+  *sourced* file replaces the sourcing shell.
+- **`$$` lies inside subshells.** `$(…)` and `( … )` fork, but `$$` still
+  prints the top-level shell's PID; `$BASHPID` is the real current PID.
