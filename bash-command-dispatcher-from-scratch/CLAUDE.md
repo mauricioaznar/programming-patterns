@@ -392,6 +392,24 @@ new-feature / new-fix, ⬜ worktree-init, ⬜ statusline.
 - **`08`: predicted master's last line prints after the sourced caller's
   `exit 8`** → `exit` in a sourced file ends the *sourcing* shell, so master
   stops there → use `return` in files meant to be sourced.
+- **E1 v1: `bash: hello.sh got 0 args: <>: No such file or directory`** →
+  `exec bash "$("$SCRIPT_DIR/hello.sh" "$@")"`: the `$( … )` already *ran*
+  hello.sh and captured its stdout, so `exec bash` got that output as the
+  filename to run → pass the path and `"$@"` directly, no `$( … )`. Read the
+  error as `program: thing-it-couldn't-find: reason`.
+- **E1 v1: `exec bash ./hello.sh a b` → No such file** → `./` is the
+  *current directory*, not the script's folder; run from `exercises/`, there's
+  no `exercises/hello.sh` → `"$SCRIPT_DIR/hello.sh"`.
+- **E1 v1: `exec bash "./hello $@"`** → one quoted string glues path and args
+  into a single word (bash looks for a file `./hello a`), and `.sh` was
+  missing; ShellCheck SC2145 → path and `"$@"` as separate words, each quoted.
+- **E1 v1: "`shift` didn't fail with no args, `$?` was 0"** → it did fail
+  (status 1, silent unless `shopt -s shift_verbose`); the `$?` checked was the
+  whole script's, after `usage; exit 0` → check `$?` on the line right after.
+- **E1 v1: `[[ "$@" -gt 0 ]]` → `hello: unbound variable`** → compared the
+  *args* to a number (drill 5's mistake again). `-gt` in `[[ ]]` evaluates both
+  sides as arithmetic, where a bare word is a variable name, and `set -u`
+  aborted on `hello` → compare the count, `$#`.
 
 ## Learnings
 

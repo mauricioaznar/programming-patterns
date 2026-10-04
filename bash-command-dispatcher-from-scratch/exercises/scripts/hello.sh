@@ -4,6 +4,6 @@
 # exits 3, so you can see whether the dispatcher passed the args and the exit
 # code through unchanged.
 printf 'hello.sh got %d args:' "$#"
-printf ' <%s>' "$@"
+[ "$#" -gt 0 ] && printf ' <%s>' "$@"
 printf '\n'
 exit 3

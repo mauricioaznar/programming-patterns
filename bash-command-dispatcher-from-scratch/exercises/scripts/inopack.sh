@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+
+set -u
 # E1 — dispatcher, v1
 #
 # The single entry point: `bash inopack.sh <command> [args]`. It does no work of
@@ -17,3 +19,31 @@
 #
 # Test from at least two directories, then check `echo $?` after each case.
 # Every primitive here was a dispatcher warm-up drill (warmup/dispatcher/).
+
+cmd=${1:-help}
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ "$#" -gt 0 ]]; then shift; fi;
+
+echo "$?"
+
+usage () {
+cat <<'EOF'
+  Usage:
+    hello -- prints arguments passed into it in a pretty way
+EOF
+}
+
+case $cmd in
+  "help"|"-h"|"--help") usage; exit 0;;
+  "hello") exec bash $SCRIPT_DIR/hello.sh "$@";;
+  *) echo "unknown command $cmd" >&2; usage >&2; exit 2;;
+esac
+
+# what is the difference between:
+
+# "hello") exec bash $("SCRIPT_DIR/hello.sh" "$@");;
+# and
+
+# "hello") exec bash $SCRIPT_DIR/hello.sh "$@";;
