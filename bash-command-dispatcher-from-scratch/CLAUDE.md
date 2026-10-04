@@ -4,11 +4,30 @@ Learn the bash command line by rebuilding a real CLI from scratch: the `inopack`
 utility, which wraps a multi-repo git workflow behind a single `inopack <command>`
 dispatcher. A read-only snapshot of the original scripts lives in
 `reference/inopack-commands/` — study it, then rebuild each command myself under
-`scripts/`.
+`exercises/scripts/` (same layout as the reference, so `ROOT` = `exercises/`).
 
 The rebuild is fully self-contained in this subproject. Wiring the finished
 commands into the real umbrella repo is a **separate, later goal** — not part of
 these exercises.
+
+## Layout
+
+```
+bash-sandbox/<topic>/        predict-then-run worksheets, one folder per topic
+warmup/<command>/[vN/]       small drills for the primitives one command needs
+exercises/scripts/           the rebuild (inopack.sh + sibling scripts)
+reference/inopack-commands/  the original (answer key)
+```
+
+## Versioning
+
+Each exercise grows in versions: a small v1 that runs end to end, then v2, v3…
+each adding one slice of the reference's behavior. One file per command;
+versions are **git commits**, marked below, so `git diff` shows what a version
+added. Only v1 is planned up front — the next version is decided together once
+the current one is done. Warm-up drills are grouped by the version they prepare
+(`warmup/install-shorthand/v1/`, later `v2/`). Placeholder scripts (e.g.
+`hello.sh`) stand in for commands not built yet.
 
 ## Reference bundle
 
@@ -19,13 +38,17 @@ these exercises.
 Read the contract alongside each script; several behaviors (confirmation prompts,
 non-interactive handling, ff-only semantics) are specified there, not just in code.
 
-## Sandbox — how bash builds a command's arguments
+## Sandbox — `bash-sandbox/`
+
+Predict-then-run worksheets (`# predict:` then `# actual:`), one subfolder per
+topic. Add a new subfolder for a new topic.
+
+### `bash-sandbox/argv-pipeline/` — how bash builds a command's arguments
 
 Added before drill 3.1: the predictions depend on a model of how bash turns a
 typed line into the argv a program receives, which the drills hadn't taught
-yet. `bash-sandbox/` holds predict-then-run worksheets (`# predict:` then
-`# actual:`), measured with `./args` (Mau writes it in S1), which prints the
-arg count and each arg in `<…>`. `glob-playground/` holds fixture files for S5.
+yet. Measured with `./args` (Mau writes it in S1), which prints the arg count
+and each arg in `<…>`. `glob-playground/` holds fixture files for S5.
 S1–S6 cover everything 3.1 needs; S7–S8 were added on request.
 
 - ✅ `01-argv.sh` — a command receives a list, not a line; why `echo` hides it
@@ -45,7 +68,10 @@ small standalone drills in `warmup/<command>/`, one primitive at a time, each
 reviewed (statically, pasted in chat) before moving to the next. Add a new
 subfolder when another command needs its own primitives.
 
-### `warmup/install-shorthand/` — primitives for `install-shorthand.sh`
+### `warmup/dispatcher/` — primitives for `inopack.sh` (E1)
+
+(Was `warmup/install-shorthand/` until drill 8; renamed because every drill
+here is a dispatcher primitive.)
 
 - ✅ `01-args.sh` — positional arguments (`$1`, `$#`, `$@`)
 - ✅ `02-defaults.sh` — `${1:-default}` and `set -u`
@@ -57,21 +83,41 @@ subfolder when another command needs its own primitives.
 - ✅ `07-location.sh` — script self-location (`${BASH_SOURCE[0]}`)
 - ✅ `08-exec.sh` — `exec` vs. a plain call
 
+### `warmup/install-shorthand/v1/` — primitives for shorthand v1 (E2)
+
+Drills write into `./fake-home/` (gitignored), never the real `~`.
+
+- ⬜ `01-redirection.sh` — `>` vs `>>`, `{ …; } >> file`, `[ -s file ]`
+- ⬜ `02-deferred-expansion.sh` — expand a path now, keep `"$@"` literal for later
+- ⬜ `03-grep-test.sh` — grep's exit code as an `if` condition; anchored `-E` patterns
+- ⬜ `04-append-if-absent.sh` — idempotent append; `HOME=… cmd` one-command override
+
 ## Exercises
 
 Priority path first (the daily-driver reads + install), then the git-workflow
-commands, then bonus commands. Rebuild each under `scripts/`, then diff against
-`reference/inopack-commands/scripts/` and note what differed.
+commands, then bonus commands. Rebuild each under `exercises/scripts/`, then
+diff against `reference/inopack-commands/scripts/` and note what differed. E3+
+are the candidate list, not a commitment — after each v1 we decide what comes
+next (a v2, or the next command).
 
-- ⬜ **E1 — dispatcher** (`inopack.sh`). Route a subcommand to a sibling script.
+- 🚧 **E1 — dispatcher** (`inopack.sh`). Route a subcommand to a sibling script.
   Teaches: `set -u`, deriving `ROOT` from `${BASH_SOURCE[0]}`, `${1:-help}`,
   `shift`, `case`, `exec`, quoted `"$@"`, `usage()` heredoc, exit codes.
+  - ⬜ **v1** — `help`/no command → usage; `hello` → `exec` to placeholder
+    `hello.sh` with args and exit code intact; unknown → stderr + non-zero.
+    Spec in the file header.
+  - later versions: one route per real command as it's built.
 - ⬜ **E2 — install-shorthand** (`install-shorthand.sh`). Define the machine-local
   `inopack` shell function idempotently. Teaches: `while/case/shift` arg parsing,
   deferred expansion (writing `\$@` literally), parameter-expansion string edits,
   idempotent rc-file editing (grep-detect → sed/awk-rewrite → append), atomic
   replace (`mktemp`+`mv`), backups (`cp -p`), login vs interactive shells,
   dry-run, writing outside the repo.
+  - ⬜ **v1** — write `inopack() { bash <abs path>/inopack.sh "$@"; }` to
+    `$HOME/.bashrc` only if no definition is there (grep-detect → append), path
+    derived from self-location, `inopack install-shorthand` routed by E1.
+    Tested with `HOME=fake-home`. No flags, repair, login bridge or zsh yet —
+    those are v2+ candidates, picked after v1.
 - ⬜ **E3 — summary** (`summary.sh`). Read-only session orientation. Teaches:
   arrays, `local`, `git -C`, read-only plumbing (`rev-parse`, `status --porcelain`,
   `log --format`, `rev-list --count`, upstream `@{u}`), markdown scraping with
@@ -449,7 +495,7 @@ new-feature / new-fix, ⬜ worktree-init, ⬜ statusline.
   kept as ordinary characters inside one argument. `echo` prints its
   arguments joined by one space, so `echo "one two" three` (2 args) and
   `echo one two three` (3 args) look identical. To see real boundaries, print
-  each argument in brackets (`bash-sandbox/args`).
+  each argument in brackets (`bash-sandbox/argv-pipeline/args`).
 - **`""` vs no argument.** `./args ""` → `$#` is 1 and `$1` is *set* to the
   empty string. `./args` → `$#` is 0 and `$1` is *unset*. Bash's terms are
   set/unset, not assigned/unassigned.

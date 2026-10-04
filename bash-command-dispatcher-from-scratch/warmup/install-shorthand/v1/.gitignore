@@ -1,0 +1,2 @@
+# Drills write into a fake HOME, never your real one.
+fake-home/
