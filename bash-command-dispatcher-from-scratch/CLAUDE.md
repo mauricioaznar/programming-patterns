@@ -54,7 +54,7 @@ subfolder when another command needs its own primitives.
 - ✅ `04-case.sh` — `case` statement
 - ✅ `05-shift.sh` — `shift`
 - ✅ `06-functions.sh` — functions + heredoc
-- 🚧 `07-location.sh` — script self-location (`${BASH_SOURCE[0]}`)
+- ✅ `07-location.sh` — script self-location (`${BASH_SOURCE[0]}`)
 - ⬜ `08-exec.sh` — `exec` vs. a plain call
 
 ## Exercises
@@ -610,3 +610,14 @@ new-feature / new-fix, ⬜ worktree-init, ⬜ statusline.
   `path.resolve`. The reference appends `/..` after `dirname` to set `ROOT` to
   the repo root, so every path reads `$ROOT/docs/…`, `$ROOT/scripts/…`.
   `BASH_SOURCE` is bash-only: `source`-ing from zsh leaves it empty.
+- **`source` runs a file in the current shell; `$0` vs `BASH_SOURCE[0]`.**
+  `./f.sh` starts a new process (its `cd`/variables die with it); `source f.sh`
+  (or `. f.sh`) runs the lines in *this* shell, so `cd`, variables, functions
+  and `exit` all affect the caller — that's how rc files work. `$0` is a POSIX
+  special parameter: the running *program* (script path, or the shell's name
+  when interactive). `BASH_SOURCE[0]` (bash-only array) is the *file whose code
+  is running*. They differ only when sourced: `bash outer.sh` sourcing
+  `inner.sh` → `$0=outer.sh`, `BASH_SOURCE[0]=./inner.sh`. Inside a function it's
+  the file that defined the function — why `workspace.sh` (sourced by
+  `drop.sh`, `new-branch.sh`) still finds its own folder. zsh is the reverse:
+  its `$0` already names the sourced file by default.

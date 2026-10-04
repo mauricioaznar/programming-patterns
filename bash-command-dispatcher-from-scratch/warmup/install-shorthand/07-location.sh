@@ -9,7 +9,6 @@
 # Test this: run it once from inside this warmup/ folder, then `cd` somewhere
 # else entirely and run it again via its relative or full path. The printed
 # directory should not change.
-echo "${BASH_SOURCE[0]}/.."
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-
-echo "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+echo "$dir"
