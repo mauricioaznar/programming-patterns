@@ -8,8 +8,8 @@
 //   parseKeyValues('name=Mau;age=31')  →  { name: 'Mau', age: '31' }
 //
 // Answer before coding (write your answers here as comments):
-//   Q1. What is the input type and what is the output type?
-//   Q2. Which characters have a special meaning in this format, and what does each one mean?
+//   Q1. What is the input type and what is the output type? key value pairs separated by colons, key value pairs are joined by a = operator
+//   Q2. Which characters have a special meaning in this format, and what does each one mean? 
 //   Q3. What should parseKeyValues('name') return — there's no `=`. Pick one and say why.
 //       (Not tested yet. We'll decide together after you answer.)
 

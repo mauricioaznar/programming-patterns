@@ -188,7 +188,7 @@ then the parser ladder.
   - ⬜ **P3 — `multiplicative` (`* /`).** Precedence from layering: `2 + 3 * 4 = 14`.
   - ⬜ **P4 — `unary` + `( expr )`.** Recursion back to the top rule, widening
     spans over the parens, `UNBALANCED_PAREN`.
-  - ⬜ **P5 — `power` (`^`).** Right-associativity via recursion instead of a
+  - ⬜ **P5 — `power` (`^`) (optional).** Right-associativity via recursion instead of a
     loop; why `2 ^ -1` works.
   - ⬜ **P6 — `comparison`.** Optional operator (not a loop), `CHAINED_COMPARISON`.
   - ⬜ **P7 — `and` / `or`.** `AND` binds tighter than `OR`; the `(` fork —
@@ -199,7 +199,7 @@ then the parser ladder.
     `EMPTY_FORMULA`, trailing comma.
   - ⬜ **P10 — Never throw.** Internal `ParseError` + `fail(): never`, panic-mode
     `synchronize()` at `,`, several errors from one source.
-  - ⬜ **P11 — Error polish.** `EXPECTED_VALUE` messages, the missing-comma-on-
+  - ⬜ **P11 — Error polish (optional; reading the reference is enough).** `EXPECTED_VALUE` messages, the missing-comma-on-
     a-new-line hint, `MISPLACED_IF`, diagnostics sorted by `start`.
 
   Decided: Mau writes M1 himself (after the warm-ups); test runner is Vitest.
