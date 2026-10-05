@@ -24,6 +24,28 @@ On top of the repo-wide rules in the root `CLAUDE.md`:
 - No runtime dependencies. No expression-parsing libraries.
 - **Never `eval` or `new Function`.**
 
+## Reference bundle
+
+`reference/advancedModel/` is a snapshot of the production implementation (from
+the `pact` client, Price Sheets → Advanced Model). It is the answer key for
+M1–M6 and the source material for exercises built on it.
+
+- `reference/advancedModel/formula/` — the language: `lexer.ts`, `parser.ts`,
+  `ast.ts`, `validate.ts`, `evaluate.ts`, `types.ts` (diagnostics + spans),
+  `index.ts` (`analyzeModel` / `runModel`), plus `formula.spec.ts` and
+  `referenceModels.fixture.ts` (real models with hand-computed totals).
+- `reference/advancedModel/*.tsx` + `useModelLibrary.ts` — the editor UI around
+  it (insert palette, test panel, sub-model picker, variable library). It imports
+  app-only packages (`@eog/geode-core`, `../../../shared/types`), so it doesn't run here.
+
+Where it differs from the spec below (worth discussing, not copying): it uses one
+expression grammar for numbers *and* conditions and type-checks in the validator
+(its answer to the M3 `(` fork), allows a trailing comma, adds `^`, `<>`, and
+sub-models (`@NAME` → another saved model's total, with cycle detection).
+
+**Claude does not open the reference during reviews unless Mau asks.** Mau may
+read it whenever he wants.
+
 ## The language
 
 Every variable has a name, a min, and a max. It is referenced with an `@` prefix.
