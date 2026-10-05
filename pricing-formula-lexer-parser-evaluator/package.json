@@ -1,0 +1,13 @@
+{
+  "name": "pricing-formula-lexer-parser-evaluator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.0"
+  }
+}

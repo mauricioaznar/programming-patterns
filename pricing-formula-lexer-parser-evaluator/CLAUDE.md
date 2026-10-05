@@ -152,6 +152,24 @@ rejecting them, so the validator can produce the helpful message.
 
 ## Exercises
 
+Mau starts from zero (didn't know what a lexer is), so a warm-up track comes
+first. Each drill is a small `.ts` stub + test file under `warmup/`, plus a
+question or two to answer before coding. Then M1 (Mau writes the real lexer),
+then the parser ladder.
+
+- ⬜ **W1 — What is a parser?** `"name=Mau;age=31"` → `{ name: 'Mau', age: '31' }`.
+  Text → structured data (`JSON.parse` is one).
+- ⬜ **W2 — One character at a time.** `"123"` → `123` without `Number()`, using
+  a `pos` cursor + `peek()` / `advance()`.
+- ⬜ **W3 — What is a lexer?** `"12 + 345 - 6"` → tokens. Grouping characters
+  into words, skipping whitespace.
+- ⬜ **W4 — Positions.** `start`/`end` on tokens; `#` in `"1 # 2"` reported at column 3.
+- ⬜ **W5 — Reading tokens.** Compute `1 + 2 - 3` straight from the token list.
+- ⬜ **W6 — Why a tree?** W5 gets `2 + 3 * 4` wrong → write the tree by hand,
+  evaluate it recursively. What an AST is.
+- ⬜ **W7 — Reading a grammar.** Worksheet: which strings does
+  `expr := term ('+' term)*` accept? Rule → function. Bridge into P1.
+
 - ⬜ **M1 — Tokens + lexer.** First pick the test runner (Vitest or Jest), then
   Claude hands over the M1 test file. Teaches: tokens with `start`/`end` positions,
   case-insensitive keywords, int/decimal numbers, `@` variables, one- vs
@@ -184,11 +202,7 @@ rejecting them, so the validator can produce the helpful message.
   - ⬜ **P11 — Error polish.** `EXPECTED_VALUE` messages, the missing-comma-on-
     a-new-line hint, `MISPLACED_IF`, diagnostics sorted by `start`.
 
-  Open before P1 (Mau's call):
-  - [ ] Token source — (a) copy the reference `lexer.ts` + `types.ts` in as
-    given code and make M1 optional later (Claude's pick), (b) Mau writes M1
-    first, or (c) hand-built `Token[]` in early tests.
-  - [ ] Test runner — Vitest (Claude's pick) or Jest.
+  Decided: Mau writes M1 himself (after the warm-ups); test runner is Vitest.
 - ⬜ **M5 — Validator.** Teaches: variable definitions, semantic checks as a
   second AST walk, exhaustive `switch` + `never`, "did you mean" suggestions with
   Levenshtein distance ≤ 2.
