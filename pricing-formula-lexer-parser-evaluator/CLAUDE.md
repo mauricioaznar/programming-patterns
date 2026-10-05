@@ -156,14 +156,39 @@ rejecting them, so the validator can produce the helpful message.
   Claude hands over the M1 test file. Teaches: tokens with `start`/`end` positions,
   case-insensitive keywords, int/decimal numbers, `@` variables, one- vs
   two-character operators (`<=`, `>=`, `!=`), lexer diagnostics.
-- ⬜ **M2 — AST + expression parser.** Arithmetic only. Teaches: recursive
-  descent, precedence and left-associativity from grammar layering
-  (`2 - 3 - 4 = -5`, `2 + 3 * 4 = 14`), unary minus, parentheses.
-- ⬜ **M3 — Conditions + IF / ELSE IF / ELSE + comma-separated program.**
-  Teaches: boolean precedence (`AND` over `OR`), and resolving the `(`
-  ambiguity (the design fork above).
-- ⬜ **M4 — Error recovery.** Teaches: panic-mode resync at `,`, reporting
-  several syntax errors from one source without throwing.
+- ⬜ **M2–M4 — Parser ladder (P1–P11).** Replaces the old M2 (expressions),
+  M3 (conditions + IF + program) and M4 (error recovery). Each level adds one
+  grammar rule on top of Mau's previous level and comes with a test file; a
+  level is done when its tests pass. The last level is the reference
+  `parser.ts`, so the ladder follows the **reference grammar** (one expression
+  grammar for numbers and conditions, `^`, trailing comma), not the spec grammar
+  above.
+  - ⬜ **P1 — `primary`.** NUMBER / VARIABLE → AST node with span. Parser state
+    (`pos`, `peek`, `advance`), the `eof` token.
+  - ⬜ **P2 — `additive` (`+ -`).** The fold loop (`left = {…left, right}`);
+    left-associativity: `2 - 3 - 4 = -5`.
+  - ⬜ **P3 — `multiplicative` (`* /`).** Precedence from layering: `2 + 3 * 4 = 14`.
+  - ⬜ **P4 — `unary` + `( expr )`.** Recursion back to the top rule, widening
+    spans over the parens, `UNBALANCED_PAREN`.
+  - ⬜ **P5 — `power` (`^`).** Right-associativity via recursion instead of a
+    loop; why `2 ^ -1` works.
+  - ⬜ **P6 — `comparison`.** Optional operator (not a loop), `CHAINED_COMPARISON`.
+  - ⬜ **P7 — `and` / `or`.** `AND` binds tighter than `OR`; the `(` fork —
+    why one shared grammar avoids backtracking.
+  - ⬜ **P8 — `statement` (IF / ELSE IF / ELSE).** Keyword matching,
+    `EXPECTED_THEN`, `MISSING_ELSE`.
+  - ⬜ **P9 — `program`.** Comma-separated statements, `EMPTY_STATEMENT`,
+    `EMPTY_FORMULA`, trailing comma.
+  - ⬜ **P10 — Never throw.** Internal `ParseError` + `fail(): never`, panic-mode
+    `synchronize()` at `,`, several errors from one source.
+  - ⬜ **P11 — Error polish.** `EXPECTED_VALUE` messages, the missing-comma-on-
+    a-new-line hint, `MISPLACED_IF`, diagnostics sorted by `start`.
+
+  Open before P1 (Mau's call):
+  - [ ] Token source — (a) copy the reference `lexer.ts` + `types.ts` in as
+    given code and make M1 optional later (Claude's pick), (b) Mau writes M1
+    first, or (c) hand-built `Token[]` in early tests.
+  - [ ] Test runner — Vitest (Claude's pick) or Jest.
 - ⬜ **M5 — Validator.** Teaches: variable definitions, semantic checks as a
   second AST walk, exhaustive `switch` + `never`, "did you mean" suggestions with
   Levenshtein distance ≤ 2.
