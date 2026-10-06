@@ -14,6 +14,7 @@
 //       (Not tested yet. We'll decide together after you answer.)
 
 export const parseKeyValues = (text: string): Record<string, string> => {
+  if (text === '') return {}
   const pairs = text.split(";")
   const keyValues: Record<string, string> = {}
   pairs.forEach((pair) => {

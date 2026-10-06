@@ -157,10 +157,12 @@ first. Each drill is a small `.ts` stub + test file under `warmup/`, plus a
 question or two to answer before coding. Then M1 (Mau writes the real lexer),
 then the parser ladder.
 
-- ⬜ **W1 — What is a parser?** `"name=Mau;age=31"` → `{ name: 'Mau', age: '31' }`.
-  Text → structured data (`JSON.parse` is one).
-- ⬜ **W2 — One character at a time.** `"123"` → `123` without `Number()`, using
-  a `pos` cursor + `peek()` / `advance()`.
+- ✅ **W1 — What is a parser?** `"name=Mau;age=31"` → `{ name: 'Mau', age: '31' }`.
+  Text → structured data (`JSON.parse` is one). Decided: lenient for now
+  (`''` → `{}`); stray `;` and `'name'` with no `=` still undecided (Q3).
+- 🚧 **W2 — One character at a time.** `"123"` → `123` without `Number()`, using
+  a `pos` cursor + `peek()` / `advance()`. Tests pass; cleanup list (TODO
+  comments) in the stub still open.
 - ⬜ **W3 — What is a lexer?** `"12 + 345 - 6"` → tokens. Grouping characters
   into words, skipping whitespace.
 - ⬜ **W4 — Positions.** `start`/`end` on tokens; `#` in `"1 # 2"` reported at column 3.
@@ -217,7 +219,14 @@ then the parser ladder.
 
 *symptom → cause → fix. Record bugs as they happen.*
 
-(none yet)
+- **W1: `parseKeyValues('')` returned `{ '': '' }` instead of `{}`** →
+  `''.split(';')` is `['']` (one empty string), not `[]`, so the loop ran once
+  and stored an empty key → guard `text === ''` at the top. (A guard inside the
+  loop would also pass, but it silently accepts `'a=1;'` and `'a=1;;b=2'`.)
+- **W2: `readInteger('7')` returned 8, `'0'` returned 1** → subtracted 47 and
+  checked the range 47–58, though Q2's own answer said `'0'`–`'9'` is 48–57
+  (47 is `/`, 58 is `:`) → subtract `'0'.charCodeAt(0)`; use named bounds, not
+  magic numbers. The range fix took two passes — off-by-one at *each* end.
 
 ## Learnings
 
